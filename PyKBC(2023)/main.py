@@ -21,7 +21,7 @@ class KbcApp(tk.Tk):
 
         self.windows= {}
 
-        for num , window in enumerate([MainWindow]+[QWindow]*2 +[LossWindow]+[WinWindow]):
+        for num , window in enumerate([MainWindow]+[QWindow]*15 +[LossWindow]+[WinWindow]):
             frame = window(rootbox,self,questions=questions,qnum=num)
             if window == QWindow:
                 self.windows[num] = frame
@@ -70,7 +70,7 @@ class QWindow(tk.Frame):
         self.quesNum = kwargs['qnum']
         genre,qs = kwargs['questions'][self.quesNum -1]
         q,a,b,c,d,ans = random.choice(qs)
-
+        tempOptionList = [a,b,c,d]
         canvas = tk.Canvas(self, width=1200,height=640,borderwidth=0)
         canvas.pack(side='top',fill='both',expand=True)
         
@@ -96,39 +96,12 @@ class QWindow(tk.Frame):
         for x,im in zip(options,[canvas.im3,canvas.im4,canvas.im5,canvas.im6]):
             if x.get() == ans:
                 buttons.append(tk.Button(self,width=520,height=53,anchor='nw',image=im,compound="center",fg="#ffa646",
-                                         font=("Calibri",25),textvariable=x,command=lambda: ControlWin.nextwin(self.quesNum)))
+                                         font=("Calibri",20),textvariable=x,command=lambda: ControlWin.nextwin(self.quesNum)))
             else:
                 buttons.append(tk.Button(self,width=520,height=53,anchor='nw',image=im,compound="center",fg="#ffa646",
-                                         font=("Calibri",25),textvariable=x,command=lambda: ControlWin.ActiveWindow(LossWindow)))
+                                         font=("Calibri",20),textvariable=x,command=lambda: ControlWin.ActiveWindow(LossWindow)))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-        # buttonA = tk.Button(self,width=520,height=53,anchor="nw",image=canvas.im3,compound="center",fg='#ffa646',font=("Calibri",25),textvariable=options[0])
-        # buttonB = tk.Button(self,width=520,height=53,anchor="nw",image=canvas.im4,compound="center",fg='#ffa646',font=("Calibri",25),textvariable=options[1])
-        # buttonC = tk.Button(self,width=520,height=53,anchor="nw",image=canvas.im5,compound="center",fg='#ffa646',font=("Calibri",25),textvariable=options[2])
-        # buttonD = tk.Button(self,width=520,height=53,anchor="nw",image=canvas.im6,compound="center",fg='#ffa646',font=("Calibri",25),textvariable=options[3])
-        
-        # for no , button in enumerate([buttonA,buttonB,buttonC,buttonD]):
-        #     if options[no].get()==ans:
-        #         button.command = ControlWin.nextquestion(no)
-        #     else:
-        #         button.command = ControlWin.setWindow(MainWindow)
-        #         pass
-
-
-
-        canvas.create_text(610,480,text=str(q),font=("Calibri",25),fill="#ffa646")
+        canvas.create_text(610,480,text=str(q),font=("Calibri",20),fill="#ffa646")
         canvas.create_window(100,520,window=buttons[0],anchor='nw')
         canvas.create_window(620,520,window=buttons[1],anchor='nw')
         canvas.create_window(100,580,window=buttons[2],anchor='nw')

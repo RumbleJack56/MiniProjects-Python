@@ -124,7 +124,7 @@ class WinWindow(tk.Frame):
 def main():
     questions = [[key,val] for key,val in webscrape.question_set().items()]
     random.shuffle(questions)
-
+    print(questions)
     app = KbcApp(questions)
     app.mainloop()
 if __name__=="__main__":

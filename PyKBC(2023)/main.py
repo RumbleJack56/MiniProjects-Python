@@ -1,6 +1,5 @@
 import tkinter as tk
 import time,random, webscrape, pygame.mixer as soundsystem
-from tkinter import ttk
 from PIL import Image,ImageTk
 
 soundsystem.init()
@@ -47,6 +46,10 @@ class KbcApp(tk.Tk):
             self.ActiveWindow(WinWindow)
         else:
             self.ActiveWindow(qnum+1)
+    def tick(self,num):
+        pass
+    def tock(self,num):
+        pass
 
 class MainWindow(tk.Frame):
     def __init__(self,parent,ControlWin,**kwargs):
@@ -55,7 +58,7 @@ class MainWindow(tk.Frame):
         canvas.pack(side='top',fill='both',expand=True)
         soundsystem.music.load("PyKBC(2023)\intro.mp3")
         soundsystem.music.play()
-        canvas.background = ImageTk.PhotoImage(Image.open("Title Window.png").resize((1200,640),Image.LANCZOS))
+        canvas.background = ImageTk.PhotoImage(Image.open("PyKBC(2023)/Title Window.png").resize((1200,640),Image.LANCZOS))
         canvas.create_image(0,0,image=canvas.background,anchor="nw")
         canvas.bg2 = ImageTk.PhotoImage(Image.open(r"PyKBC(2023)\blueimg.png").resize((1193,90),Image.BICUBIC))
         startbutton = tk.Button(self,image=canvas.bg2,text = r"  Lets Play",font=("Impact",45),fg="#8b714f",compound="center",
@@ -71,6 +74,8 @@ class QWindow(tk.Frame):
         genre,qs = kwargs['questions'][self.quesNum -1]
         q,a,b,c,d,ans = random.choice(qs)
         tempOptionList = [a,b,c,d]
+        random.shuffle(tempOptionList)
+        a,b,c,d = tempOptionList
         canvas = tk.Canvas(self, width=1200,height=640,borderwidth=0)
         canvas.pack(side='top',fill='both',expand=True)
         
@@ -100,21 +105,34 @@ class QWindow(tk.Frame):
             else:
                 buttons.append(tk.Button(self,width=520,height=53,anchor='nw',image=im,compound="center",fg="#ffa646",
                                          font=("Calibri",20),textvariable=x,command=lambda: ControlWin.ActiveWindow(LossWindow)))
+                
+
+        
+        self.timerval = tk.StringVar()
+        if self.quesNum<=10:
+            self.timerval.set("60")
+        else:
+            self.timerval.set("")
+        canvas.im7 = ImageTk.PhotoImage(Image.open(r"PyKBC(2023)\deviji.png").resize((250,250),Image.LANCZOS))
+        ticktock = tk.Button(self,textvariable=self.timerval,relief="sunken",fg="#fff",image=canvas.im7,font=("Lobster",30))
+
 
         canvas.create_text(610,480,text=str(q),font=("Calibri",20),fill="#ffa646")
         canvas.create_window(100,520,window=buttons[0],anchor='nw')
         canvas.create_window(620,520,window=buttons[1],anchor='nw')
         canvas.create_window(100,580,window=buttons[2],anchor='nw')
         canvas.create_window(620,580,window=buttons[3],anchor='nw')
+        canvas.create_window(500,170,window=ticktock,anchor='nw')
 
-        
-        # print(genre,qs)
-        
+
         print(genre,q,a,b,c,d,ans)
 
 class LossWindow(tk.Frame):
     def __init__(self,parent,root,**kwargs):
         tk.Frame.__init__(self,parent)
+        a = tk.Label(self,text="BETTER LUCK NEXT TIME",font=("Calibri",50),fg="#f00")
+        a.pack(side="top",anchor="nw",fill="both",expand=True)
+        
 
 class WinWindow(tk.Frame):
     def __init__(self,parent,root,**kwargs):
@@ -124,7 +142,6 @@ class WinWindow(tk.Frame):
 def main():
     questions = [[key,val] for key,val in webscrape.question_set().items()]
     random.shuffle(questions)
-    print(questions)
     app = KbcApp(questions)
     app.mainloop()
 if __name__=="__main__":

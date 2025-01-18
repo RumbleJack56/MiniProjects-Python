@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Scholar Metrics</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 10px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .profile-image {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      margin: 10px auto;
+    }
+    .stats {
+      margin-top: 20px;
+      text-align: left;
+    }
+    .chart {
+      margin-top: 20px;
+    }
+    #loading {
+      margin-top: 20px;
+    }
+    #retryBtn {
+      display: none;
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #retryBtn:hover {
+      background-color: #0056b3;
+    }
+    #loadingBar {
+      width: 100%;
+      height: 10px;
+      background-color: #f3f3f3;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    #loadingBar div {
+      height: 100%;
+      background-color: #4caf50;
+      width: 0;
+      transition: width 0.5s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="loading">Fetching Data From Google Scholar...</div>
+    <div id="loadingBar"><div></div></div>
+    <img id="profileImage" class="profile-image" alt="Profile Picture">
+    <h1 id="name"></h1>
+    <p id="affiliation"></p>
+    <div class="stats">
+      <h2>Metrics</h2>
+      <ul>
+        <li><strong>Citations:</strong> <span id="citations"></span></li>
+        <li><strong>h-index:</strong> <span id="hindex"></span></li>
+        <li><strong>i10-index:</strong> <span id="i10index"></span></li>
+        <li><strong>Citations (5 years ago):</strong> <span id="citations5y"></span></li>
+        <li><strong>h-index (5 years ago):</strong> <span id="hindex5y"></span></li>
+        <li><strong>i10-index (5 years ago):</strong> <span id="i10index5y"></span></li>
+      </ul>
+    </div>
+    <div class="chart">
+      <h2>Citations by Year</h2>
+      <canvas id="citationsChart" width="400" height="200"></canvas>
+    </div>
+    <button id="retryBtn" onclick="fetchMetrics()">Retry</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const apiUrl = "https://scholy-fast.vercel.app/author?name=Dinesh K. Vishwakarma"; // API endpoint alias
+    let fetchTimeout;
+
+    async function fetchMetrics() {
+      // Show loading bar and hide any previous error
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("loadingBar").style.display = "block";
+      document.getElementById("retryBtn").style.display = "none";
+
+      const loadingBar = document.getElementById("loadingBar").querySelector("div");
+      loadingBar.style.width = "0%";
+
+      let progress = 0;
+      const loadingInterval = setInterval(() => {
+        if (progress < 100) {
+          progress += 5; // Slower progress rate
+          loadingBar.style.width = `${progress}%`;
+        }
+      }, 500); // Slower update every 500ms
+
+      try {
+        const response = await Promise.race([
+          fetch(apiUrl), // Fetch data from API
+          new Promise((_, reject) => setTimeout(() => reject('timeout'), 30000)) // 30 seconds timeout
+        ]);
+
+        clearInterval(loadingInterval);
+        loadingBar.style.width = "100%"; // Fill the bar when data is fetched
+
+        const data = await response.json();
+
+        // Populate data
+        document.getElementById("profileImage").src = data.url_picture;
+        document.getElementById("name").textContent = data.name;
+        document.getElementById("affiliation").textContent = data.affiliation;
+        document.getElementById("citations").textContent = data.citedby;
+        document.getElementById("hindex").textContent = data.hindex;
+        document.getElementById("i10index").textContent = data.i10index;
+        document.getElementById("citations5y").textContent = data.citedby5y;
+        document.getElementById("hindex5y").textContent = data.hindex5y;
+        document.getElementById("i10index5y").textContent = data.i10index5y;
+
+        // Prepare citations by year data
+        const years = Object.keys(data.cites_per_year);
+        const citations = Object.values(data.cites_per_year);
+
+        // Render chart
+        renderChart(years, citations);
+
+        // Hide loading bar after data is fetched
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("loadingBar").style.display = "none";
+
+      } catch (error) {
+        clearInterval(loadingInterval);
+        loadingBar.style.width = "100%"; // Fill the bar even if there's an error
+        document.getElementById("loading").textContent = "Error fetching data. Please try again.";
+        document.getElementById("retryBtn").style.display = "block"; // Show retry button
+      }
+    }
+
+    function renderChart(years, citations) {
+      const ctx = document.getElementById("citationsChart").getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: years,
+          datasets: [{
+            label: "Citations",
+            data: citations,
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            borderColor: "rgba(75, 192, 192, 1)",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    // Fetch data on load
+    fetchMetrics();
+  </script>
+</body>
+</html>

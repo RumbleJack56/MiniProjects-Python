@@ -8,12 +8,13 @@
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 10px;
+      padding: 0;
+      text-align: center; /* Center align the text */
     }
     .container {
-      max-width: 600px;
-      margin: 0 0;
-      text-align: center;
+      max-width: 800px;
+      margin: 20px auto;
+      text-align: left; /* Left align the container */
     }
     .profile-image {
       width: 100px;
@@ -25,8 +26,30 @@
       margin-top: 20px;
       text-align: left;
     }
-    .chart {
-      margin-top: 20px;
+    table {
+      width: 60%;
+      margin: 20px 0;
+      border-collapse: collapse;
+      background-color: rgba(75, 192, 192, 0.1); /* Lighter table color */
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-left: auto;
+      margin-right: auto;
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: rgba(75, 192, 192, 0.7); /* Lighter header color */
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    tr:hover {
+      background-color: #ddd;
     }
     #loading {
       margin-top: 20px;
@@ -65,21 +88,42 @@
     <img id="profileImage" class="profile-image" alt="Profile Picture">
     <h1 id="name"></h1>
     <p id="affiliation"></p>
+    
     <div class="stats">
-      <h2>Metrics</h2>
-      <ul>
-        <li><strong>Citations:</strong> <span id="citations"></span></li>
-        <li><strong>h-index:</strong> <span id="hindex"></span></li>
-        <li><strong>i10-index:</strong> <span id="i10index"></span></li>
-        <li><strong>Citations (5 years ago):</strong> <span id="citations5y"></span></li>
-        <li><strong>h-index (5 years ago):</strong> <span id="hindex5y"></span></li>
-        <li><strong>i10-index (5 years ago):</strong> <span id="i10index5y"></span></li>
-      </ul>
+      <h2>Metrics:</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Current</th>
+            <th>5 Years Ago</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Citations:</td>
+            <td id="citations"></td>
+            <td id="citations5y"></td>
+          </tr>
+          <tr>
+            <td>h-index</td>
+            <td id="hindex"></td>
+            <td id="hindex5y"></td>
+          </tr>
+          <tr>
+            <td>i10-index</td>
+            <td id="i10index"></td>
+            <td id="i10index5y"></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
+
     <div class="chart">
       <h2>Citations by Year</h2>
       <canvas id="citationsChart" width="400" height="200"></canvas>
     </div>
+    
     <button id="retryBtn" onclick="fetchMetrics()">Retry</button>
   </div>
 

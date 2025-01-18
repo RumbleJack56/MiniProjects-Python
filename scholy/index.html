@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Scholar Metrics</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      background-color: #f8f9fa;
+    }
+    .container {
+      width: 90%;
+      max-width: 800px;
+      margin: auto;
+      text-align: left;
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .profile-image {
+      width: 20%;
+      max-width: 100px;
+      height: auto;
+      border-radius: 50%;
+      margin: 10px auto;
+      display: block;
+    }
+    table {
+      width: 100%;
+      margin: 20px 0;
+      border-collapse: collapse;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th {
+      background-color: #6600b4; /* Color for the heading row */
+      color: white;
+      padding: 10px;
+      text-align: center;
+    }
+    td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    h1, h2 {
+      color: #343a40;
+    }
+    #loading {
+      margin-top: 1em;
+      text-align: center;
+    }
+    #retryBtn {
+      display: none;
+      margin-top: 1em;
+      padding: 10px 20px;
+      background-color: #6600b4;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    #retryBtn:hover {
+      background-color: #7711c5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="loading">Fetching Data From Google Scholar...</div>
+    <img id="profileImage" class="profile-image" alt="Profile Picture">
+    <h1 id="name"></h1>
+    <p id="affiliation"></p>
+    
+    <div class="stats">
+      <h2>Metrics</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Current</th>
+            <th>5 Years Ago</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Citations</td>
+            <td id="citations"></td>
+            <td id="citations5y"></td>
+          </tr>
+          <tr>
+            <td>h-index</td>
+            <td id="hindex"></td>
+            <td id="hindex5y"></td>
+          </tr>
+          <tr>
+            <td>i10-index</td>
+            <td id="i10index"></td>
+            <td id="i10index5y"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="chart">
+      <h2>Citations by Year</h2>
+      <canvas id="citationsChart"></canvas>
+    </div>
+    
+    <button id="retryBtn" onclick="fetchMetrics()">Retry</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const apiUrl = "/.netlify/functions/fetchScholarMetrics"; // API endpoint alias
+
+    async function fetchMetrics() {
+      const loadingDiv = document.getElementById("loading");
+      const retryBtn = document.getElementById("retryBtn");
+      const profileImage = document.getElementById("profileImage");
+      const name = document.getElementById("name");
+      const affiliation = document.getElementById("affiliation");
+      const citations = document.getElementById("citations");
+      const citations5y = document.getElementById("citations5y");
+      const hindex = document.getElementById("hindex");
+      const hindex5y = document.getElementById("hindex5y");
+      const i10index = document.getElementById("i10index");
+      const i10index5y = document.getElementById("i10index5y");
+
+      loadingDiv.style.display = "block";
+      retryBtn.style.display = "none";
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        profileImage.src = data.url_picture;
+        name.textContent = data.name;
+        affiliation.textContent = data.affiliation;
+        citations.textContent = data.citedby;
+        citations5y.textContent = data.citedby5y;
+        hindex.textContent = data.hindex;
+        hindex5y.textContent = data.hindex5y;
+        i10index.textContent = data.i10index;
+        i10index5y.textContent = data.i10index5y;
+
+        const years = Object.keys(data.cites_per_year);
+        const citationsByYear = Object.values(data.cites_per_year);
+
+        renderChart(years, citationsByYear);
+
+        loadingDiv.style.display = "none";
+      } catch (error) {
+        loadingDiv.textContent = "Error fetching data. Please try again.";
+        retryBtn.style.display = "block";
+      }
+    }
+
+    function renderChart(years, citations) {
+      const ctx = document.getElementById("citationsChart").getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: years,
+          datasets: [{
+            label: "Citations",
+            data: citations,
+            backgroundColor: "rgba(102, 0, 180, 0.2)",
+            borderColor: "rgba(202, 20, 253, 1)",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    fetchMetrics();
+  </script>
+</body>
+</html>

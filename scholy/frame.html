@@ -9,88 +9,87 @@
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      text-align: center; /* Center align the text */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      background-color: #f8f9fa;
     }
     .container {
+      width: 90%;
       max-width: 800px;
-      margin: 20px auto;
-      text-align: left; /* Left align the container */
+      margin: auto;
+      text-align: left;
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
     .profile-image {
-      width: 100px;
-      height: 100px;
+      width: 20%;
+      max-width: 100px;
+      height: auto;
       border-radius: 50%;
       margin: 10px auto;
-    }
-    .stats {
-      margin-top: 20px;
-      text-align: left;
+      display: block;
     }
     table {
-      width: 60%;
+      width: 100%;
       margin: 20px 0;
       border-collapse: collapse;
-      background-color: rgba(75, 192, 192, 0.1); /* Lighter table color */
+      background-color: #ffffff;
       border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      margin-left: auto;
-      margin-right: auto;
-    }
-    th, td {
-      padding: 10px 12px;
-      text-align: center;
-      border: 1px solid #ddd;
+      overflow: hidden;
     }
     th {
-      background-color: rgba(75, 192, 192, 0.7); /* Lighter header color */
+      background-color: #007BFF; /* Color for the heading row */
       color: white;
+      padding: 10px;
+      text-align: center;
+    }
+    td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
     }
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
     tr:hover {
-      background-color: #ddd;
+      background-color: #f1f1f1;
+    }
+    h1, h2 {
+      color: #343a40;
     }
     #loading {
-      margin-top: 20px;
+      margin-top: 1em;
+      text-align: center;
     }
     #retryBtn {
       display: none;
-      margin-top: 20px;
-      padding: 10px;
+      margin-top: 1em;
+      padding: 10px 20px;
       background-color: #007BFF;
       color: white;
       border: none;
       cursor: pointer;
+      border-radius: 5px;
     }
     #retryBtn:hover {
       background-color: #0056b3;
-    }
-    #loadingBar {
-      width: 100%;
-      height: 10px;
-      background-color: #f3f3f3;
-      border-radius: 5px;
-      overflow: hidden;
-    }
-    #loadingBar div {
-      height: 100%;
-      background-color: #4caf50;
-      width: 0;
-      transition: width 0.5s ease;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div id="loading">Fetching Data From Google Scholar...</div>
-    <div id="loadingBar"><div></div></div>
     <img id="profileImage" class="profile-image" alt="Profile Picture">
     <h1 id="name"></h1>
     <p id="affiliation"></p>
     
     <div class="stats">
-      <h2>Metrics:</h2>
+      <h2>Metrics</h2>
       <table>
         <thead>
           <tr>
@@ -101,7 +100,7 @@
         </thead>
         <tbody>
           <tr>
-            <td>Citations:</td>
+            <td>Citations</td>
             <td id="citations"></td>
             <td id="citations5y"></td>
           </tr>
@@ -118,10 +117,10 @@
         </tbody>
       </table>
     </div>
-
+    
     <div class="chart">
       <h2>Citations by Year</h2>
-      <canvas id="citationsChart" width="400" height="200"></canvas>
+      <canvas id="citationsChart"></canvas>
     </div>
     
     <button id="retryBtn" onclick="fetchMetrics()">Retry</button>
@@ -130,63 +129,46 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const apiUrl = "https://scholy-fast.vercel.app/author?name=Dinesh K. Vishwakarma"; // API endpoint alias
-    let fetchTimeout;
 
     async function fetchMetrics() {
-      // Show loading bar and hide any previous error
-      document.getElementById("loading").style.display = "block";
-      document.getElementById("loadingBar").style.display = "block";
-      document.getElementById("retryBtn").style.display = "none";
+      const loadingDiv = document.getElementById("loading");
+      const retryBtn = document.getElementById("retryBtn");
+      const profileImage = document.getElementById("profileImage");
+      const name = document.getElementById("name");
+      const affiliation = document.getElementById("affiliation");
+      const citations = document.getElementById("citations");
+      const citations5y = document.getElementById("citations5y");
+      const hindex = document.getElementById("hindex");
+      const hindex5y = document.getElementById("hindex5y");
+      const i10index = document.getElementById("i10index");
+      const i10index5y = document.getElementById("i10index5y");
 
-      const loadingBar = document.getElementById("loadingBar").querySelector("div");
-      loadingBar.style.width = "0%";
-
-      let progress = 0;
-      const loadingInterval = setInterval(() => {
-        if (progress < 100) {
-          progress += 5; // Slower progress rate
-          loadingBar.style.width = `${progress}%`;
-        }
-      }, 500); // Slower update every 500ms
+      loadingDiv.style.display = "block";
+      retryBtn.style.display = "none";
 
       try {
-        const response = await Promise.race([
-          fetch(apiUrl), // Fetch data from API
-          new Promise((_, reject) => setTimeout(() => reject('timeout'), 30000)) // 30 seconds timeout
-        ]);
-
-        clearInterval(loadingInterval);
-        loadingBar.style.width = "100%"; // Fill the bar when data is fetched
-
+        const response = await fetch(apiUrl);
         const data = await response.json();
 
-        // Populate data
-        document.getElementById("profileImage").src = data.url_picture;
-        document.getElementById("name").textContent = data.name;
-        document.getElementById("affiliation").textContent = data.affiliation;
-        document.getElementById("citations").textContent = data.citedby;
-        document.getElementById("hindex").textContent = data.hindex;
-        document.getElementById("i10index").textContent = data.i10index;
-        document.getElementById("citations5y").textContent = data.citedby5y;
-        document.getElementById("hindex5y").textContent = data.hindex5y;
-        document.getElementById("i10index5y").textContent = data.i10index5y;
+        profileImage.src = data.url_picture;
+        name.textContent = data.name;
+        affiliation.textContent = data.affiliation;
+        citations.textContent = data.citedby;
+        citations5y.textContent = data.citedby5y;
+        hindex.textContent = data.hindex;
+        hindex5y.textContent = data.hindex5y;
+        i10index.textContent = data.i10index;
+        i10index5y.textContent = data.i10index5y;
 
-        // Prepare citations by year data
         const years = Object.keys(data.cites_per_year);
-        const citations = Object.values(data.cites_per_year);
+        const citationsByYear = Object.values(data.cites_per_year);
 
-        // Render chart
-        renderChart(years, citations);
+        renderChart(years, citationsByYear);
 
-        // Hide loading bar after data is fetched
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("loadingBar").style.display = "none";
-
+        loadingDiv.style.display = "none";
       } catch (error) {
-        clearInterval(loadingInterval);
-        loadingBar.style.width = "100%"; // Fill the bar even if there's an error
-        document.getElementById("loading").textContent = "Error fetching data. Please try again.";
-        document.getElementById("retryBtn").style.display = "block"; // Show retry button
+        loadingDiv.textContent = "Error fetching data. Please try again.";
+        retryBtn.style.display = "block";
       }
     }
 
@@ -199,12 +181,13 @@
           datasets: [{
             label: "Citations",
             data: citations,
-            backgroundColor: "rgba(75, 192, 192, 0.2)",
-            borderColor: "rgba(75, 192, 192, 1)",
+            backgroundColor: "rgba(0, 123, 255, 0.2)",
+            borderColor: "rgba(0, 123, 255, 1)",
             borderWidth: 1
           }]
         },
         options: {
+          responsive: true,
           scales: {
             y: {
               beginAtZero: true
@@ -214,7 +197,6 @@
       });
     }
 
-    // Fetch data on load
     fetchMetrics();
   </script>
 </body>

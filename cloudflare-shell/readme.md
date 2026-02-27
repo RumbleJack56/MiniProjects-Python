@@ -82,6 +82,7 @@ ACCOUNT_ID="your_account_id"
 ZONE_ID="your_zone_id"
 API_TOKEN="your_api_token"
 TUNNEL_NAME="api-tunnel"
+DOMAIN="domain.tld"
 ```
 
 ---
@@ -106,7 +107,7 @@ Format:
 
 ```bash
 INGRESS_RULES=(
-  "hostname=service"
+  "subdomain=service"
 )
 ```
 
@@ -114,9 +115,9 @@ Examples:
 
 ```bash
 INGRESS_RULES=(
-  "api.example.com=http://localhost:8000"
-  "ssh.example.com=ssh://localhost:22"
-  "app.example.com=http://localhost:3000"
+  "api=http://localhost:8000"
+  "ssh=ssh://localhost:22"
+  "app=http://localhost:3000"
 )
 ```
 
@@ -128,6 +129,68 @@ https://localhost:PORT
 ssh://localhost:22
 tcp://localhost:PORT
 ```
+
+---
+
+## Additional Features
+
+### Test Ingress and FastAPI App
+
+If you set `ENABLE_TEST_INGRESS=true` at the top of the script, the following will happen automatically:
+
+- A test ingress rule (`test=http://localhost:8000`) will be injected into your tunnel configuration.
+- A minimal FastAPI app will be created as `test.py` (if not present).
+- The script will install the `uv` runner from Astral if missing, and run the FastAPI app using `uv run test.py`.
+- This allows you to quickly verify tunnel and DNS setup with a working health endpoint at `https://test.<your-domain>`.
+
+### Ingress Rules Format
+
+You can define ingress rules as:
+
+```bash
+INGRESS_RULES=(
+  "subdomain=http://localhost:8000"
+  "ssh=ssh://localhost:22"
+  "app=http://localhost:3000"
+)
+```
+
+If `ENABLE_TEST_INGRESS` is enabled, the script will ensure `test=http://localhost:8000` is present.
+
+### DNS Automation
+
+For each ingress rule, the script will automatically:
+- Create or update a proxied CNAME DNS record in Cloudflare for `<subdomain>.<your-domain>` pointing to `<tunnel-id>.cfargotunnel.com`.
+
+### Error Handling
+
+- If tunnel or DNS configuration fails, the script will exit immediately with an error.
+- All steps are idempotent and safe to re-run.
+
+### Example: Minimal Setup
+
+```bash
+ACCOUNT_ID="your_account_id"
+ZONE_ID="your_zone_id"
+API_TOKEN="your_api_token"
+TUNNEL_NAME="api-tunnel"
+ENABLE_TEST_INGRESS=true
+DOMAIN="yourdomain.com"
+INGRESS_RULES=(
+  "api=http://localhost:8000"
+  "ssh=ssh://localhost:22"
+  "app=http://localhost:3000"
+)
+```
+
+Run:
+
+```bash
+chmod +x tunnel.sh
+./tunnel.sh
+```
+
+You will see output for tunnel creation, DNS setup, and the FastAPI test app running if enabled.
 
 ---
 
@@ -215,7 +278,7 @@ Edit script:
 
 ```bash
 INGRESS_RULES+=(
-  "new.example.com=http://localhost:5000"
+  "new=http://localhost:5000"
 )
 ```
 

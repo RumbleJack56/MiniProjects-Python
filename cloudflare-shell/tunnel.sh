@@ -2,14 +2,14 @@
 set -euo pipefail
 
 # ================= USER CONFIG =================
-ACCOUNT_ID="b7a9197fcce10b2a9b43472e75b9f2f0"
-ZONE_ID="97b155476ca49df397520f98d72db9e9"
-API_TOKEN="aqNAV5L998dGCXm7lnBVWa3S9HnyRHt4hJYsrpDX"
-TUNNEL_NAME="test-tunnel1"
+ACCOUNT_ID="YOUR_ACCOUNT_ID_HERE"
+ZONE_ID="YOUR_ZONE_ID_HERE"
+API_TOKEN="YOUR_API_TOKEN_HERE"
+TUNNEL_NAME="YOUR_TUNNEL_NAME_HERE"
 
 ENABLE_TEST_INGRESS=true
 
-DOMAIN="rumblejack56.dev"
+DOMAIN="yourdomain.tld"
 #subdomain=hosturl
 INGRESS_RULES=(
   "api=http://localhost:8000"

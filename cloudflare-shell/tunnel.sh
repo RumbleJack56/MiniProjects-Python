@@ -8,13 +8,17 @@ API_TOKEN="YOUR_API_TOKEN_HERE"
 TUNNEL_NAME="YOUR_TUNNEL_NAME_HERE"
 
 ENABLE_TEST_INGRESS=true
+# TEST_ROUTE format: "subdomain=protocol://host:port"
+# The subdomain and port are parsed from this value and used both for:
+#   - registering the ingress rule with Cloudflare
+#   - launching the local test FastAPI server on the correct port
+TEST_ROUTE="testpc1=http://localhost:12355"
 
-DOMAIN="yourdomain.tld"
+DOMAIN="YOUR_DOMAIN.TLD"
 #subdomain=hosturl
 INGRESS_RULES=(
-  "api=http://localhost:8000"
-  "ssh=ssh://localhost:22"
-  "app=http://localhost:3000"
+  "ssh=tcp://localhost:22"
+  "subdomain=http://localhost:8000"
 )
 
 CF_API="https://api.cloudflare.com/client/v4"
@@ -99,6 +103,12 @@ check_user_config() {
     echo "✗ TUNNEL_NAME is not configured"
     config_valid=false
   fi
+
+  if [[ "$DOMAIN" == "YOUR_DOMAIN.TLD" ]]; then
+    echo "✗ DOMAIN is not configured"
+    config_valid=false
+  fi
+  
   if [[ "$config_valid" == false ]]; then
     echo ""
     echo "Please update the USER CONFIG section at the top of this script with your Cloudflare credentials."
@@ -408,25 +418,35 @@ configure_dns_records() {
   fi
 }
 
-# Inject test ingress rule if enabled
+# Inject test ingress rule if enabled.
+# Reads the subdomain and full service URL from TEST_ROUTE rather than
+# using hardcoded values, so changing TEST_ROUTE at the top is sufficient.
 inject_test_ingress() {
   if [[ "${ENABLE_TEST_INGRESS}" == "true" ]]; then
-    found=false
+    # Skip injection if the exact TEST_ROUTE entry is already present
+    local found=false
     for rule in "${INGRESS_RULES[@]}"; do
-      if [[ "$rule" == "test=http://localhost:8000" ]]; then
+      if [[ "$rule" == "$TEST_ROUTE" ]]; then
         found=true
         break
       fi
     done
+
     if [[ "$found" == false ]]; then
-      INGRESS_RULES+=("test=http://localhost:8000")
+      INGRESS_RULES+=("$TEST_ROUTE")
     fi
   fi
 }
 
-# Run test FastAPI app if enabled
+# Run test FastAPI app if enabled.
+# The port is parsed from TEST_ROUTE so it always matches the registered ingress rule.
 run_test_ingress() {
   if [[ "${ENABLE_TEST_INGRESS}" == "true" ]]; then
+    # Parse the port from TEST_ROUTE (format: "subdomain=protocol://host:port")
+    # We strip everything up to the last ':' to get the port number.
+    local test_service="${TEST_ROUTE#*=}"          # e.g. http://localhost:12355
+    local test_port="${test_service##*:}"           # e.g. 12355
+
     # Install uv from astral if not present
     if ! command -v uv &>/dev/null; then
       echo "Installing uv from astral..."
@@ -434,9 +454,9 @@ run_test_ingress() {
       export PATH="$HOME/.local/bin:$PATH"
     fi
 
-    # Create test.py if not present
-    if [[ ! -f "test.py" ]]; then
-      cat > test.py << EOF
+    # Generate test.py using the port derived from TEST_ROUTE.
+    # Regenerated every run so the file always reflects the current config.
+    cat > test.py << EOF
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
@@ -455,12 +475,12 @@ def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("test:app", host="0.0.0.0", port=8000)
+    # Port is set from TEST_ROUTE in setup_tunnel.sh (currently: ${test_port})
+    uvicorn.run("test:app", host="0.0.0.0", port=${test_port})
 EOF
-    fi
 
-    # Run uv test.py
-    echo "Running test.py with uv..."
+    # Run the test server
+    echo "Running test.py with uv on port ${test_port}..."
     uv run test.py
   fi
 }
